@@ -1,5 +1,7 @@
+
 'use client';
 
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -17,14 +19,59 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
-import { MessageSquareWarning, Trash2, Users } from 'lucide-react';
+import { MessageSquareWarning, Trash2, Users, PlusCircle } from 'lucide-react';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 
-const emergencyContacts = [
+const emergencyContactSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  relation: z.string().min(1, 'Relation is required'),
+  phone: z.string().min(10, 'Phone number is required'),
+});
+
+type EmergencyContact = z.infer<typeof emergencyContactSchema>;
+
+const formSchema = z.object({
+  emergencyContacts: z.array(emergencyContactSchema),
+  newContact: emergencyContactSchema.optional(),
+});
+
+const initialContacts: EmergencyContact[] = [
   { name: 'Jane Doe', relation: 'Spouse', phone: '(555) 123-4567' },
   { name: 'John Smith', relation: 'Friend', phone: '(555) 987-6543' },
 ];
 
 export function OtherFeaturesPanel() {
+  const [contacts, setContacts] = useState<EmergencyContact[]>(initialContacts);
+  const [showAddForm, setShowAddForm] = useState(false);
+
+  const {
+    register,
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(emergencyContactSchema),
+    defaultValues: {
+      name: '',
+      relation: '',
+      phone: '',
+    },
+  });
+
+  const onSubmit = (data: EmergencyContact) => {
+    setContacts([...contacts, data]);
+    reset();
+    setShowAddForm(false);
+  };
+
+  const deleteContact = (index: number) => {
+    setContacts(contacts.filter((_, i) => i !== index));
+  };
+
+
   return (
     <Card>
       <CardHeader>
@@ -32,7 +79,7 @@ export function OtherFeaturesPanel() {
         <CardDescription>Manage your safety preferences and report incidents.</CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="anonymous-reporting">
+        <Tabs defaultValue="emergency-contacts">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="anonymous-reporting">
               <MessageSquareWarning className="mr-2 h-4 w-4" />
@@ -68,20 +115,56 @@ export function OtherFeaturesPanel() {
                 These contacts will be notified when you trigger an SOS alert.
               </p>
               <ul className="space-y-3">
-                {emergencyContacts.map((contact, index) => (
+                {contacts.map((contact, index) => (
                   <li key={index} className="flex items-center justify-between rounded-lg border p-3">
                     <div>
                       <p className="font-semibold">{contact.name}</p>
                       <p className="text-sm text-muted-foreground">{contact.relation} - {contact.phone}</p>
                     </div>
-                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-muted-foreground hover:text-destructive"
+                      onClick={() => deleteContact(index)}
+                    >
                       <Trash2 className="h-4 w-4" />
                       <span className="sr-only">Delete {contact.name}</span>
                     </Button>
                   </li>
                 ))}
               </ul>
-              <Button variant="outline">Add New Contact</Button>
+
+              {showAddForm ? (
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 rounded-lg border p-4">
+                  <h4 className="font-semibold">Add New Contact</h4>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Name</Label>
+                      <Input id="name" {...register('name')} placeholder="e.g., John Doe" />
+                      {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="relation">Relation</Label>
+                      <Input id="relation" {...register('relation')} placeholder="e.g., Sibling" />
+                      {errors.relation && <p className="text-xs text-destructive">{errors.relation.message}</p>}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Phone</Label>
+                      <Input id="phone" {...register('phone')} type="tel" placeholder="e.g., (555) 555-5555" />
+                       {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button type="button" variant="ghost" onClick={() => { setShowAddForm(false); reset(); }}>Cancel</Button>
+                    <Button type="submit">Save Contact</Button>
+                  </div>
+                </form>
+              ) : (
+                <Button variant="outline" onClick={() => setShowAddForm(true)}>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add New Contact
+                </Button>
+              )}
             </div>
           </TabsContent>
         </Tabs>
