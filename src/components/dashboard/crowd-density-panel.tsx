@@ -25,22 +25,12 @@ const chartConfig = {
   },
 };
 
-const simpleHash = (str: string) => {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash |= 0;
-  }
-  return hash;
-};
-
-const generateInitialData = (baseLat: number, baseLng: number) => {
+const generateInitialData = () => {
   const data = [];
   const now = new Date();
+  // Generate on client-side only to avoid hydration mismatch
   for (let i = 5; i >= 0; i--) {
     const time = new Date(now.getTime() - i * 60000);
-    // Use client-side random values
     const density = Math.floor(Math.random() * 101) + 20; // 20 to 120
     data.push({ time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), density });
   }
@@ -52,6 +42,7 @@ const generateNextDataPoint = (
 ) => {
   const now = new Date();
   const prevDensity = prevData[prevData.length - 1]?.density || 70;
+  // Generate on client-side only to avoid hydration mismatch
   const change = Math.floor(Math.random() * 41) - 20; // change between -20 and 20
   let newDensity = prevDensity + change;
   if (newDensity < 10) newDensity = 10;
@@ -68,21 +59,19 @@ export function CrowdDensityPanel() {
   const [chartData, setChartData] = useState<{ time: string; density: number }[]>([]);
 
   useEffect(() => {
-    if (location) {
-      // Generate initial data on client mount to avoid hydration mismatch
-      setChartData(generateInitialData(location.lat, location.lng));
-      
-      const interval = setInterval(() => {
-        setChartData((prevData) => {
-          const newData = [...prevData.slice(1)];
-          newData.push(generateNextDataPoint(newData));
-          return newData;
-        });
-      }, 15000); // Update every 15 seconds
+    // Generate initial data on client mount to avoid hydration mismatch
+    setChartData(generateInitialData());
+    
+    const interval = setInterval(() => {
+      setChartData((prevData) => {
+        const newData = [...prevData.slice(1)];
+        newData.push(generateNextDataPoint(newData));
+        return newData;
+      });
+    }, 15000); // Update every 15 seconds
 
-      return () => clearInterval(interval);
-    }
-  }, [location]);
+    return () => clearInterval(interval);
+  }, []);
 
   const currentDensity = useMemo(() => {
     return chartData.length > 0 ? chartData[chartData.length - 1].density : 0;
