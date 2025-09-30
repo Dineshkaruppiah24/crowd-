@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -46,6 +47,41 @@ const RouteOptimizerSchema = z.object({
 
 type RouteOptimizerFormValues = z.infer<typeof RouteOptimizerSchema>;
 
+// Helper function to create a simple hash from a string
+const simpleHash = (str: string) => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash |= 0; // Convert to 32bit integer
+  }
+  return hash;
+};
+
+
+// Function to generate dynamic crowd data based on incident description
+const generateCrowdData = (incident: string, baseLat: number, baseLng: number) => {
+    if (!incident) return [];
+    
+    const hash = simpleHash(incident);
+    const numPoints = (Math.abs(hash) % 3) + 3; // Generate 3 to 5 data points
+    const crowdData = [];
+
+    for (let i = 0; i < numPoints; i++) {
+        const latOffset = ( ( (hash * (i+1)) % 100) / 10000) - 0.005; // small offset
+        const lngOffset = ( ( (hash / (i+1)) % 100) / 10000) - 0.005; // small offset
+        const density = Math.abs((hash * (i+1) * 37)) % 300 + 50; // Density between 50 and 350
+        
+        crowdData.push({
+            location: `${(baseLat + latOffset).toFixed(4)},${(baseLng + lngOffset).toFixed(4)}`,
+            density: density
+        });
+    }
+
+    return crowdData;
+}
+
+
 export function RouteOptimizer() {
   const [result, setResult] = useState<SuggestEvacuationRoutesOutput | null>(
     null
@@ -54,6 +90,8 @@ export function RouteOptimizer() {
   const [isLocating, setIsLocating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const [crowdDensityData, setCrowdDensityData] = useState<any[]>([]);
+
 
   const form = useForm<RouteOptimizerFormValues>({
     resolver: zodResolver(RouteOptimizerSchema),
@@ -104,16 +142,14 @@ export function RouteOptimizer() {
     setError(null);
     setResult(null);
 
-    const crowdDensityData = JSON.stringify([
-      { location: '34.0530,-118.2440', density: 150 },
-      { location: '34.0515,-118.2430', density: 300 },
-      { location: '34.0525,-118.2450', density: 50 },
-    ]);
+    const [lat, lng] = values.currentLocation.split(',').map(s => parseFloat(s.trim()));
+    const dynamicCrowdData = generateCrowdData(values.incidentDescription, lat, lng);
+    setCrowdDensityData(dynamicCrowdData);
 
     try {
       const response = await getEvacuationRoutes({
         ...values,
-        crowdDensityData,
+        crowdDensityData: JSON.stringify(dynamicCrowdData),
       });
       setResult(response);
     } catch (e) {
@@ -250,7 +286,7 @@ export function RouteOptimizer() {
             <div className="overflow-hidden rounded-lg border h-96">
              <GoogleMapWrapper
                 center={{ lat, lng }}
-                crowdDensityData={JSON.parse(form.getValues('incidentDescription') ? '[{"location":"34.0530,-118.2440","density":150},{"location":"34.0515,-118.2430","density":300},{"location":"34.0525,-118.2450","density":50}]' : '[]')}
+                crowdDensityData={crowdDensityData}
               />
             </div>
           </div>
