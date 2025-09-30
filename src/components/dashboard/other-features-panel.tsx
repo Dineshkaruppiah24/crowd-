@@ -19,10 +19,11 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
-import { MessageSquareWarning, Trash2, Users, PlusCircle } from 'lucide-react';
+import { MessageSquareWarning, Trash2, Users, PlusCircle, Bluetooth } from 'lucide-react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useToast } from '@/hooks/use-toast';
 
 const emergencyContactSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -45,6 +46,7 @@ const initialContacts: EmergencyContact[] = [
 export function OtherFeaturesPanel() {
   const [contacts, setContacts] = useState<EmergencyContact[]>(initialContacts);
   const [showAddForm, setShowAddForm] = useState(false);
+  const { toast } = useToast();
 
   const {
     register,
@@ -70,6 +72,13 @@ export function OtherFeaturesPanel() {
   const deleteContact = (index: number) => {
     setContacts(contacts.filter((_, i) => i !== index));
   };
+  
+  const handleMeshAlert = () => {
+    toast({
+      title: "Simulating Mesh Alert",
+      description: "Broadcasting a low-energy alert to nearby devices.",
+    });
+  };
 
 
   return (
@@ -80,7 +89,7 @@ export function OtherFeaturesPanel() {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="emergency-contacts">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="anonymous-reporting">
               <MessageSquareWarning className="mr-2 h-4 w-4" />
               Anonymous Reporting
@@ -88,6 +97,10 @@ export function OtherFeaturesPanel() {
             <TabsTrigger value="emergency-contacts">
               <Users className="mr-2 h-4 w-4" />
               Emergency Contacts
+            </TabsTrigger>
+            <TabsTrigger value="mesh-alert">
+              <Bluetooth className="mr-2 h-4 w-4" />
+              Offline Mesh Alert
             </TabsTrigger>
           </TabsList>
           <TabsContent value="anonymous-reporting" className="mt-6">
@@ -165,6 +178,17 @@ export function OtherFeaturesPanel() {
                   Add New Contact
                 </Button>
               )}
+            </div>
+          </TabsContent>
+           <TabsContent value="mesh-alert" className="mt-6">
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                If cellular networks are unavailable, you can broadcast a low-energy Bluetooth alert to other CrowdCompass users nearby. This can help create a local mesh network for essential communication.
+              </p>
+              <Button onClick={handleMeshAlert}>
+                <Bluetooth className="mr-2 h-4 w-4" />
+                Activate Mesh Alert
+              </Button>
             </div>
           </TabsContent>
         </Tabs>
