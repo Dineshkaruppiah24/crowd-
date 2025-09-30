@@ -1,3 +1,4 @@
+
 // src/components/dashboard/nearby-map-panel.tsx
 'use client';
 
@@ -10,11 +11,9 @@ import {
 } from '@/components/ui/card';
 import { GoogleMapWrapper } from './google-map-wrapper';
 import { Skeleton } from '../ui/skeleton';
-import { AlertCircle, ExternalLink, MapPin } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { ExternalLink, MapPin } from 'lucide-react';
 import { useLocation } from '@/hooks/use-location';
 import { Button } from '../ui/button';
-import Link from 'next/link';
 
 export function NearbyMapPanel() {
   const { location: center, isLoading, error } = useLocation();
@@ -50,17 +49,8 @@ export function NearbyMapPanel() {
         </CardDescription>
       </CardHeader>
       <CardContent className="h-80 p-0">
-        {isLoading && <Skeleton className="h-full w-full" />}
-        {error && !isLoading && (
-          <div className="flex h-full items-center justify-center p-4">
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          </div>
-        )}
-        {!isLoading && center && (
+        {(isLoading || error) && <Skeleton className="h-full w-full" />}
+        {!isLoading && !error && center && (
           <GoogleMapWrapper center={center} crowdDensityData={[]} />
         )}
       </CardContent>
