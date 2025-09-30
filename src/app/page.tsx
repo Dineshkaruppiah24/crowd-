@@ -1,3 +1,4 @@
+
 // src/app/page.tsx
 'use client';
 
@@ -43,16 +44,17 @@ export default function LoginPage() {
   const { toast } = useToast();
   const [captcha, setCaptcha] = useState({ num1: 0, num2: 0 });
 
-  useEffect(() => {
-    generateCaptcha();
-  }, []);
-  
   const generateCaptcha = () => {
     setCaptcha({
       num1: Math.floor(Math.random() * 10) + 1,
       num2: Math.floor(Math.random() * 10) + 1,
     });
   };
+  
+  useEffect(() => {
+    generateCaptcha();
+  }, []);
+  
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),

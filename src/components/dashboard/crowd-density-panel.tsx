@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -39,24 +40,19 @@ const generateInitialData = (baseLat: number, baseLng: number) => {
   const now = new Date();
   for (let i = 5; i >= 0; i--) {
     const time = new Date(now.getTime() - i * 60000);
-    const incident = `crowd-density-${baseLat}-${baseLng}-${time.getMinutes()}`;
-    const hash = simpleHash(incident);
-    const density = Math.abs(hash % 100) + 20; // 20 to 120
+    // Use client-side random values
+    const density = Math.floor(Math.random() * 101) + 20; // 20 to 120
     data.push({ time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), density });
   }
   return data;
 };
 
 const generateNextDataPoint = (
-  baseLat: number,
-  baseLng: number,
   prevData: { time: string; density: number }[]
 ) => {
   const now = new Date();
-  const incident = `crowd-density-${baseLat}-${baseLng}-${now.getMinutes()}`;
-  const hash = simpleHash(incident);
   const prevDensity = prevData[prevData.length - 1]?.density || 70;
-  const change = (Math.abs(hash) % 40) - 20; // change between -20 and 20
+  const change = Math.floor(Math.random() * 41) - 20; // change between -20 and 20
   let newDensity = prevDensity + change;
   if (newDensity < 10) newDensity = 10;
   if (newDensity > 250) newDensity = 250;
@@ -73,12 +69,13 @@ export function CrowdDensityPanel() {
 
   useEffect(() => {
     if (location) {
+      // Generate initial data on client mount to avoid hydration mismatch
       setChartData(generateInitialData(location.lat, location.lng));
       
       const interval = setInterval(() => {
         setChartData((prevData) => {
           const newData = [...prevData.slice(1)];
-          newData.push(generateNextDataPoint(location.lat, location.lng, newData));
+          newData.push(generateNextDataPoint(newData));
           return newData;
         });
       }, 15000); // Update every 15 seconds
