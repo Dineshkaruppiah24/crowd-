@@ -28,7 +28,6 @@ const chartConfig = {
 const generateInitialData = () => {
   const data = [];
   const now = new Date();
-  // Generate on client-side only to avoid hydration mismatch
   for (let i = 5; i >= 0; i--) {
     const time = new Date(now.getTime() - i * 60000);
     const density = Math.floor(Math.random() * 101) + 20; // 20 to 120
@@ -42,7 +41,6 @@ const generateNextDataPoint = (
 ) => {
   const now = new Date();
   const prevDensity = prevData[prevData.length - 1]?.density || 70;
-  // Generate on client-side only to avoid hydration mismatch
   const change = Math.floor(Math.random() * 41) - 20; // change between -20 and 20
   let newDensity = prevDensity + change;
   if (newDensity < 10) newDensity = 10;
