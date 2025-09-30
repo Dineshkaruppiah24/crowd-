@@ -101,46 +101,48 @@ export function CrowdDensityPanel() {
           <p className="text-sm text-muted-foreground">People Detected</p>
         </div>
         <div className="h-24 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
-              data={chartData}
-              margin={{ top: 5, right: 10, left: 10, bottom: 0 }}
-            >
-              <defs>
-                <linearGradient id="colorDensity" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
-                  <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-               <XAxis
-                dataKey="time"
-                stroke="hsl(var(--muted-foreground))"
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis
-                stroke="hsl(var(--muted-foreground))"
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-                domain={[0, 250]}
-                hide
-              />
-              <ChartTooltip
-                cursor={false}
-                content={<ChartTooltipContent indicator="dot" />}
-              />
-              <Area
-                type="monotone"
-                dataKey="density"
-                stroke="hsl(var(--primary))"
-                fillOpacity={1}
-                fill="url(#colorDensity)"
-                strokeWidth={2}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+          <ChartContainer config={chartConfig} className="h-full w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={chartData}
+                margin={{ top: 5, right: 10, left: 10, bottom: 0 }}
+              >
+                <defs>
+                  <linearGradient id="colorDensity" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <XAxis
+                  dataKey="time"
+                  stroke="hsl(var(--muted-foreground))"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  stroke="hsl(var(--muted-foreground))"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  domain={[0, 250]}
+                  hide
+                />
+                <ChartTooltip
+                  cursor={false}
+                  content={<ChartTooltipContent indicator="dot" />}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="density"
+                  stroke="hsl(var(--primary))"
+                  fillOpacity={1}
+                  fill="url(#colorDensity)"
+                  strokeWidth={2}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </ChartContainer>
         </div>
       </CardContent>
     </Card>
