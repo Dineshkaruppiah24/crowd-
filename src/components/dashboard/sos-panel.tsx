@@ -23,6 +23,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Siren } from 'lucide-react';
 import { triggerSosAlert } from '@/app/actions';
+import { useLocation } from '@/hooks/use-location';
 
 // This is a placeholder. In a real app, this would come from a data store.
 const emergencyContacts = [
@@ -33,58 +34,46 @@ const emergencyContacts = [
 export function SosPanel() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const { location, error: locationError } = useLocation();
 
-  const handleSosConfirm = () => {
+  const handleSosConfirm = async () => {
     setIsLoading(true);
-    if (!navigator.geolocation) {
+
+    if (locationError || !location) {
       toast({
         variant: 'destructive',
-        title: 'Geolocation Not Supported',
-        description: 'Your browser does not support geolocation.',
+        title: 'Location Error',
+        description: 'Could not retrieve your location. SOS not sent.',
       });
       setIsLoading(false);
       return;
     }
+    
+    const currentLocation = `${location.lat.toFixed(4)}, ${location.lng.toFixed(
+      4
+    )}`;
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        const currentLocation = `${latitude.toFixed(4)}, ${longitude.toFixed(
-          4
-        )}`;
+    try {
+      const result = await triggerSosAlert({
+        currentLocation,
+        emergencyContacts,
+      });
 
-        try {
-          const result = await triggerSosAlert({
-            currentLocation,
-            emergencyContacts,
-          });
-
-          toast({
-            title: 'SOS Alert Sent',
-            description: result.confirmationMessage,
-            variant: 'destructive',
-            duration: 10000, // Show for longer
-          });
-        } catch (error) {
-          toast({
-            variant: 'destructive',
-            title: 'SOS Failed',
-            description: 'Could not send the SOS alert. Please try again.',
-          });
-        } finally {
-          setIsLoading(false);
-        }
-      },
-      (error) => {
-        console.error('Geolocation error:', error);
-        toast({
-          variant: 'destructive',
-          title: 'Location Error',
-          description: 'Could not retrieve your location. SOS not sent.',
-        });
-        setIsLoading(false);
-      }
-    );
+      toast({
+        title: 'SOS Alert Sent',
+        description: result.confirmationMessage,
+        variant: 'destructive',
+        duration: 10000, // Show for longer
+      });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'SOS Failed',
+        description: 'Could not send the SOS alert. Please try again.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

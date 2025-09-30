@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -38,6 +38,7 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '../ui/separator';
 import { GoogleMapWrapper } from './google-map-wrapper';
 import { useToast } from '@/hooks/use-toast';
+import { useLocation } from '@/hooks/use-location';
 
 const RouteOptimizerSchema = z.object({
   currentLocation: z.string().min(1, 'Current location is required.'),
@@ -87,52 +88,44 @@ export function RouteOptimizer() {
     null
   );
   const [isLoading, setIsLoading] = useState(false);
-  const [isLocating, setIsLocating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [crowdDensityData, setCrowdDensityData] = useState<any[]>([]);
+  const { location, isLoading: isLocating, error: locationError } = useLocation();
 
 
   const form = useForm<RouteOptimizerFormValues>({
     resolver: zodResolver(RouteOptimizerSchema),
     defaultValues: {
-      currentLocation: '34.0522, -118.2437',
+      currentLocation: '',
       destination: '',
       incidentDescription: 'Fire outbreak in a nearby building',
     },
   });
+
+  useEffect(() => {
+    if (location) {
+      const newLocation = `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`;
+      form.setValue('currentLocation', newLocation, { shouldValidate: true });
+    } else if (locationError) {
+       form.setValue('currentLocation', '34.0522, -118.2437', { shouldValidate: true });
+    }
+  }, [location, locationError, form]);
   
-  const handleGetCurrentLocation = () => {
-    setIsLocating(true);
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          const newLocation = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-          form.setValue('currentLocation', newLocation, { shouldValidate: true });
-          toast({
-            title: 'Location Found',
-            description: `Your location has been set to ${newLocation}`,
-          });
-          setIsLocating(false);
-        },
-        (error) => {
-          console.error('Geolocation error:', error);
-          toast({
-            variant: 'destructive',
-            title: 'Location Error',
-            description: 'Could not retrieve your location. Please enter it manually.',
-          });
-          setIsLocating(false);
-        }
-      );
-    } else {
-       toast({
-        variant: 'destructive',
-        title: 'Geolocation Not Supported',
-        description: 'Your browser does not support geolocation.',
+  const handleSetCurrentLocation = () => {
+    if (location) {
+      const newLocation = `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`;
+      form.setValue('currentLocation', newLocation, { shouldValidate: true });
+      toast({
+        title: 'Location Updated',
+        description: `Your location has been set to ${newLocation}`,
       });
-      setIsLocating(false);
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Location Not Available',
+        description: 'Could not retrieve your current location.',
+      });
     }
   };
 
@@ -159,7 +152,8 @@ export function RouteOptimizer() {
     }
   }
   
-  const [lat, lng] = form.watch('currentLocation').split(',').map(s => parseFloat(s.trim()));
+  const watchedLocation = form.watch('currentLocation');
+  const [lat, lng] = watchedLocation ? watchedLocation.split(',').map(s => parseFloat(s.trim())) : [0,0];
 
   return (
     <Card>
@@ -190,7 +184,7 @@ export function RouteOptimizer() {
                         type="button"
                         variant="outline"
                         size="icon"
-                        onClick={handleGetCurrentLocation}
+                        onClick={handleSetCurrentLocation}
                         disabled={isLocating}
                         aria-label="Get current location"
                       >
@@ -235,7 +229,7 @@ export function RouteOptimizer() {
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
+            <Button type="submit" disabled={isLoading || !watchedLocation} className="w-full sm:w-auto">
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -262,7 +256,7 @@ export function RouteOptimizer() {
         </CardFooter>
       )}
 
-      {result && (
+      {result && lat != 0 && (
         <CardFooter className="flex flex-col items-start gap-6">
           <Separator />
           <div className="w-full space-y-4">
