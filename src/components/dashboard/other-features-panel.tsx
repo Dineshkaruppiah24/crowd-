@@ -19,11 +19,14 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
-import { MessageSquareWarning, Trash2, Users, PlusCircle, Bluetooth } from 'lucide-react';
+import { MessageSquareWarning, Trash2, Users, PlusCircle, Bluetooth, Loader2 } from 'lucide-react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
+import { triggerMeshAlert } from '@/app/actions';
+import { useLocation } from '@/hooks/use-location';
+
 
 const emergencyContactSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -46,7 +49,9 @@ const initialContacts: EmergencyContact[] = [
 export function OtherFeaturesPanel() {
   const [contacts, setContacts] = useState<EmergencyContact[]>(initialContacts);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
   const { toast } = useToast();
+  const { location, error: locationError } = useLocation();
 
   const {
     register,
@@ -73,11 +78,45 @@ export function OtherFeaturesPanel() {
     setContacts(contacts.filter((_, i) => i !== index));
   };
   
-  const handleMeshAlert = () => {
-    toast({
-      title: "Simulating Mesh Alert",
-      description: "Broadcasting a low-energy alert to nearby devices.",
-    });
+  const handleMeshAlert = async () => {
+    setIsBroadcasting(true);
+    if (locationError || !location) {
+      toast({
+        variant: 'destructive',
+        title: 'Location Error',
+        description: 'Could not retrieve your location. Mesh alert not sent.',
+      });
+      setIsBroadcasting(false);
+      return;
+    }
+
+    const currentLocation = `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`;
+
+    try {
+      const result = await triggerMeshAlert({
+        currentLocation,
+        alertMessage: 'User has triggered an emergency mesh alert.',
+      });
+
+      toast({
+        title: 'Mesh Alert Broadcasted',
+        description: result.confirmationMessage,
+      });
+
+      // Dispatch a custom event to be caught by the notifications panel
+      window.dispatchEvent(
+        new CustomEvent('mesh-alert-received', { detail: { receivedAlert: result.receivedAlert } })
+      );
+
+    } catch (error) {
+       toast({
+        variant: 'destructive',
+        title: 'Broadcast Failed',
+        description: 'Could not send the mesh alert. Please try again.',
+      });
+    } finally {
+      setIsBroadcasting(false);
+    }
   };
 
 
@@ -185,9 +224,18 @@ export function OtherFeaturesPanel() {
               <p className="text-sm text-muted-foreground">
                 If cellular networks are unavailable, you can broadcast a low-energy Bluetooth alert to other CrowdCompass users nearby. This can help create a local mesh network for essential communication.
               </p>
-              <Button onClick={handleMeshAlert}>
-                <Bluetooth className="mr-2 h-4 w-4" />
-                Activate Mesh Alert
+              <Button onClick={handleMeshAlert} disabled={isBroadcasting}>
+                {isBroadcasting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Broadcasting...
+                  </>
+                ) : (
+                  <>
+                    <Bluetooth className="mr-2 h-4 w-4" />
+                    Activate Mesh Alert
+                  </>
+                )}
               </Button>
             </div>
           </TabsContent>

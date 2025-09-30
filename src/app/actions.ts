@@ -11,6 +11,11 @@ import {
   type SendSosAlertInput,
   type SendSosAlertOutput,
 } from '@/ai/flows/send-sos-alert';
+import {
+  broadcastMeshAlert,
+  type BroadcastMeshAlertInput,
+  type BroadcastMeshAlertOutput,
+} from '@/ai/flows/broadcast-mesh-alert';
 
 export async function getEvacuationRoutes(
   input: SuggestEvacuationRoutesInput
@@ -33,5 +38,17 @@ export async function triggerSosAlert(
   } catch (error) {
     console.error('Error triggering SOS alert:', error);
     throw new Error('Failed to trigger SOS alert.');
+  }
+}
+
+export async function triggerMeshAlert(
+  input: BroadcastMeshAlertInput
+): Promise<BroadcastMeshAlertOutput> {
+  try {
+    const output = await broadcastMeshAlert(input);
+    return output;
+  } catch (error) {
+    console.error('Error triggering mesh alert:', error);
+    throw new Error('Failed to trigger mesh alert.');
   }
 }
