@@ -1,4 +1,3 @@
-
 // src/components/dashboard/nearby-map-panel.tsx
 'use client';
 
@@ -14,9 +13,14 @@ import { Skeleton } from '../ui/skeleton';
 import { ExternalLink, MapPin } from 'lucide-react';
 import { useLocation } from '@/hooks/use-location';
 import { Button } from '../ui/button';
+import Image from 'next/image';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export function NearbyMapPanel() {
   const { location: center, isLoading, error } = useLocation();
+  const mapPlaceholder = PlaceHolderImages.find(
+    (img) => img.id === 'map-placeholder'
+  );
 
   const handleOpenInGoogleMaps = () => {
     if (center) {
@@ -49,7 +53,20 @@ export function NearbyMapPanel() {
         </CardDescription>
       </CardHeader>
       <CardContent className="h-80 p-0">
-        {(isLoading || error) && <Skeleton className="h-full w-full" />}
+        {(isLoading || error) && mapPlaceholder && (
+          <div className="relative h-full w-full">
+            <Image
+              src={mapPlaceholder.imageUrl}
+              alt={mapPlaceholder.description}
+              data-ai-hint={mapPlaceholder.imageHint}
+              fill
+              className="object-cover"
+            />
+            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                <p className="text-white/80">Loading map...</p>
+            </div>
+          </div>
+        )}
         {!isLoading && !error && center && (
           <GoogleMapWrapper center={center} crowdDensityData={[]} />
         )}
