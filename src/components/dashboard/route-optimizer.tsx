@@ -10,6 +10,7 @@ import {
   Search,
   Shield,
   Waypoints,
+  Locate,
 } from 'lucide-react';
 import type { SuggestEvacuationRoutesOutput } from '@/ai/flows/suggest-evacuation-routes';
 import { getEvacuationRoutes } from '@/app/actions';
@@ -35,6 +36,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Separator } from '../ui/separator';
 import { GoogleMapWrapper } from './google-map-wrapper';
+import { useToast } from '@/hooks/use-toast';
 
 const RouteOptimizerSchema = z.object({
   currentLocation: z.string().min(1, 'Current location is required.'),
@@ -49,7 +51,9 @@ export function RouteOptimizer() {
     null
   );
   const [isLoading, setIsLoading] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const form = useForm<RouteOptimizerFormValues>({
     resolver: zodResolver(RouteOptimizerSchema),
@@ -59,6 +63,41 @@ export function RouteOptimizer() {
       incidentDescription: 'Fire outbreak in a nearby building',
     },
   });
+  
+  const handleGetCurrentLocation = () => {
+    setIsLocating(true);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          const newLocation = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+          form.setValue('currentLocation', newLocation, { shouldValidate: true });
+          toast({
+            title: 'Location Found',
+            description: `Your location has been set to ${newLocation}`,
+          });
+          setIsLocating(false);
+        },
+        (error) => {
+          console.error('Geolocation error:', error);
+          toast({
+            variant: 'destructive',
+            title: 'Location Error',
+            description: 'Could not retrieve your location. Please enter it manually.',
+          });
+          setIsLocating(false);
+        }
+      );
+    } else {
+       toast({
+        variant: 'destructive',
+        title: 'Geolocation Not Supported',
+        description: 'Your browser does not support geolocation.',
+      });
+      setIsLocating(false);
+    }
+  };
+
 
   async function onSubmit(values: RouteOptimizerFormValues) {
     setIsLoading(true);
@@ -84,7 +123,7 @@ export function RouteOptimizer() {
     }
   }
   
-  const [lat, lng] = form.getValues('currentLocation').split(',').map(parseFloat);
+  const [lat, lng] = form.watch('currentLocation').split(',').map(s => parseFloat(s.trim()));
 
   return (
     <Card>
@@ -107,9 +146,25 @@ export function RouteOptimizer() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Your Current Location (GPS)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., 34.0522, -118.2437" {...field} />
-                    </FormControl>
+                    <div className="flex gap-2">
+                      <FormControl>
+                        <Input placeholder="e.g., 34.0522, -118.2437" {...field} />
+                      </FormControl>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={handleGetCurrentLocation}
+                        disabled={isLocating}
+                        aria-label="Get current location"
+                      >
+                        {isLocating ? (
+                           <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Locate className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -195,7 +250,7 @@ export function RouteOptimizer() {
             <div className="overflow-hidden rounded-lg border h-96">
              <GoogleMapWrapper
                 center={{ lat, lng }}
-                crowdDensityData={JSON.parse(form.getValues('incidentDescription') ? '[]' : '[]')}
+                crowdDensityData={JSON.parse(form.getValues('incidentDescription') ? '[{"location":"34.0530,-118.2440","density":150},{"location":"34.0515,-118.2430","density":300},{"location":"34.0525,-118.2450","density":50}]' : '[]')}
               />
             </div>
           </div>
