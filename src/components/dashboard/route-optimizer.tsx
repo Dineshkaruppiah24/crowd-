@@ -1,19 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
   AlertCircle,
-  ArrowRight,
   Loader2,
-  Map,
-  MapPin,
   Search,
   Shield,
-  Clock,
   Waypoints,
 } from 'lucide-react';
 import type { SuggestEvacuationRoutesOutput } from '@/ai/flows/suggest-evacuation-routes';
@@ -38,8 +33,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Separator } from '../ui/separator';
+import { GoogleMapWrapper } from './google-map-wrapper';
 
 const RouteOptimizerSchema = z.object({
   currentLocation: z.string().min(1, 'Current location is required.'),
@@ -55,10 +50,6 @@ export function RouteOptimizer() {
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const mapPlaceholder = PlaceHolderImages.find(
-    img => img.id === 'map-placeholder'
-  );
 
   const form = useForm<RouteOptimizerFormValues>({
     resolver: zodResolver(RouteOptimizerSchema),
@@ -92,6 +83,8 @@ export function RouteOptimizer() {
       setIsLoading(false);
     }
   }
+  
+  const [lat, lng] = form.getValues('currentLocation').split(',').map(parseFloat);
 
   return (
     <Card className="shadow-lg">
@@ -199,14 +192,10 @@ export function RouteOptimizer() {
           </div>
           <div className="w-full space-y-4">
             <h3 className="font-headline text-xl font-semibold">Crowd Density Map</h3>
-            <div className="overflow-hidden rounded-lg border">
-              <Image
-                src={result.crowdDensityMapImageUrl || (mapPlaceholder?.imageUrl ?? '')}
-                alt={result.crowdDensityMapImageUrl ? "Crowd density map" : mapPlaceholder?.description ?? ''}
-                width={800}
-                height={600}
-                className="h-auto w-full object-cover"
-                data-ai-hint={mapPlaceholder?.imageHint}
+            <div className="overflow-hidden rounded-lg border h-96">
+             <GoogleMapWrapper
+                center={{ lat, lng }}
+                crowdDensityData={JSON.parse(form.getValues('incidentDescription') ? '[]' : '[]')}
               />
             </div>
           </div>
