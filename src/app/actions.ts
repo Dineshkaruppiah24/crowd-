@@ -6,6 +6,11 @@ import {
   type SuggestEvacuationRoutesInput,
   type SuggestEvacuationRoutesOutput,
 } from '@/ai/flows/suggest-evacuation-routes';
+import {
+  sendSosAlert,
+  type SendSosAlertInput,
+  type SendSosAlertOutput,
+} from '@/ai/flows/send-sos-alert';
 
 export async function getEvacuationRoutes(
   input: SuggestEvacuationRoutesInput
@@ -16,5 +21,17 @@ export async function getEvacuationRoutes(
   } catch (error) {
     console.error('Error getting evacuation routes:', error);
     throw new Error('Failed to get evacuation routes from AI.');
+  }
+}
+
+export async function triggerSosAlert(
+  input: SendSosAlertInput
+): Promise<SendSosAlertOutput> {
+  try {
+    const output = await sendSosAlert(input);
+    return output;
+  } catch (error) {
+    console.error('Error triggering SOS alert:', error);
+    throw new Error('Failed to trigger SOS alert.');
   }
 }
