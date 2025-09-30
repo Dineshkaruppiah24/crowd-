@@ -4,6 +4,7 @@ import { OtherFeaturesPanel } from '@/components/dashboard/other-features-panel'
 import { RouteOptimizer } from '@/components/dashboard/route-optimizer';
 import { SosPanel } from '@/components/dashboard/sos-panel';
 import { NearbyMapPanel } from '@/components/dashboard/nearby-map-panel';
+import { CrowdDensityPanel } from '@/components/dashboard/crowd-density-panel';
 
 export default function DashboardPage() {
   return (
@@ -16,6 +17,7 @@ export default function DashboardPage() {
             <OtherFeaturesPanel />
           </div>
           <div className="grid auto-rows-max items-start gap-6 lg:col-span-1 lg:gap-8">
+            <CrowdDensityPanel />
             <SosPanel />
             <NearbyMapPanel />
             <NotificationsPanel />
