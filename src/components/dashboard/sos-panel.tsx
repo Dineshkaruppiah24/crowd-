@@ -36,7 +36,7 @@ export function SosPanel() {
   return (
     <Card className="text-center">
       <CardHeader>
-        <CardTitle className="font-headline text-2xl">Emergency SOS</CardTitle>
+        <CardTitle className="text-xl font-semibold tracking-tight">Emergency SOS</CardTitle>
         <CardDescription>
           Press only in a real emergency.
         </CardDescription>
@@ -46,7 +46,7 @@ export function SosPanel() {
           <AlertDialogTrigger asChild>
             <Button
               variant="destructive"
-              className="group h-32 w-32 rounded-full p-0 shadow-lg transition-transform duration-300 ease-in-out hover:scale-105"
+              className="group h-32 w-32 rounded-full p-0 shadow-lg transition-transform duration-300 ease-in-out hover:scale-105 active:scale-100"
               aria-label="Activate SOS"
             >
               <div className="relative flex h-full w-full items-center justify-center">
@@ -73,7 +73,7 @@ export function SosPanel() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-        <p className="mt-6 font-bold text-destructive">PRESS AND HOLD</p>
+        <p className="mt-6 text-sm font-bold uppercase tracking-wider text-destructive">Press and hold</p>
       </CardContent>
     </Card>
   );

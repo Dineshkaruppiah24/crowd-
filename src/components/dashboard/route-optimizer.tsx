@@ -87,9 +87,9 @@ export function RouteOptimizer() {
   const [lat, lng] = form.getValues('currentLocation').split(',').map(parseFloat);
 
   return (
-    <Card className="shadow-lg">
+    <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 font-headline text-2xl">
+        <CardTitle className="flex items-center gap-2 text-xl font-semibold tracking-tight">
           <Waypoints className="h-6 w-6" />
           Dynamic Route Optimization
         </CardTitle>
@@ -175,7 +175,7 @@ export function RouteOptimizer() {
         <CardFooter className="flex flex-col items-start gap-6">
           <Separator />
           <div className="w-full space-y-4">
-            <h3 className="font-headline text-xl font-semibold">Suggested Routes</h3>
+            <h3 className="text-lg font-semibold tracking-tight">Suggested Routes</h3>
             <div className="space-y-4">
               {result.safeRoutes.map((route, index) => (
                 <div key={index} className="rounded-lg border bg-secondary/50 p-4">
@@ -191,7 +191,7 @@ export function RouteOptimizer() {
             </div>
           </div>
           <div className="w-full space-y-4">
-            <h3 className="font-headline text-xl font-semibold">Crowd Density Map</h3>
+            <h3 className="text-lg font-semibold tracking-tight">Crowd Density Map</h3>
             <div className="overflow-hidden rounded-lg border h-96">
              <GoogleMapWrapper
                 center={{ lat, lng }}
